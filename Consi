@@ -1,0 +1,864 @@
+import com.atlassian.jira.issue.CustomFieldManager
+import com.atlassian.jira.issue.fields.CustomField
+import groovy.json.JsonOutput
+import com.atlassian.mail.Email
+import com.atlassian.mail.server.MailServerManager
+import com.atlassian.mail.server.SMTPMailServer
+import com.atlassian.jira.component.ComponentAccessor
+import groovy.json.StreamingJsonBuilder;
+import net.sf.json.groovy.JsonSlurper
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
+
+CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+Logger log = Logger.getLogger(getClass())
+log.setLevel(Level.INFO)
+
+//def issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("PERFECTDAY-34")
+
+//Issue Attributes
+def issueKey = issue.getKey();
+def issueStatus = issue.getStatusObject().getName();
+def request_type = issue.getIssueType().getName();
+
+//Master Shipper Attributes
+String master_shipper_company_name = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10702"));
+CustomField shipper = customFieldManager.getCustomFieldObject("customfield_10211");
+def shipperValue = issue.getCustomFieldValue(shipper)
+
+//Shipper Attributes
+CustomField shipperCompany = customFieldManager.getCustomFieldObject("customfield_10212");
+def shipperCompanyValue = issue.getCustomFieldValue(shipperCompany)
+CustomField shipperAddress = customFieldManager.getCustomFieldObject("customfield_10213");
+def shipperAddressValue = issue.getCustomFieldValue(shipperAddress)
+CustomField shiperCity = customFieldManager.getCustomFieldObject("customfield_10217");
+def shipperCityValue = issue.getCustomFieldValue(shiperCity)
+CustomField shiperState = customFieldManager.getCustomFieldObject("customfield_10219");
+def shiperStateValue = issue.getCustomFieldValue(shiperState)
+CustomField shiperZipcode = customFieldManager.getCustomFieldObject("customfield_10218");
+def shiperZipcodeValue = issue.getCustomFieldValue(shiperZipcode)
+CustomField shipperCountry = customFieldManager.getCustomFieldObject("customfield_10221");
+def shipperCountryValue = issue.getCustomFieldValue(shipperCountry)
+def ready_to_ship_by = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10226"));
+
+//Shipper Contact
+CustomField shipperCompanyName = customFieldManager.getCustomFieldObject("customfield_10220");
+def shipperCompanyNameValue = issue.getCustomFieldValue(shipperCompanyName)
+CustomField shipperName = customFieldManager.getCustomFieldObject("customfield_10223");
+def shipperNameValue = issue.getCustomFieldValue(shipperName)
+CustomField shipperPhone = customFieldManager.getCustomFieldObject("customfield_10224");
+def shipperPhoneValue = issue.getCustomFieldValue(shipperPhone)
+CustomField shipperEmail = customFieldManager.getCustomFieldObject("customfield_10225");
+def shipperEmailValue = issue.getCustomFieldValue(shipperEmail)
+
+//Consignee Attributes
+CustomField consignee = customFieldManager.getCustomFieldObject("customfield_10227");
+def consigneeValue = issue.getCustomFieldValue(consignee)
+CustomField consigneeCompany = customFieldManager.getCustomFieldObject("customfield_10228");
+def consigneeCompanyValue = issue.getCustomFieldValue(consigneeCompany)
+CustomField consigneeAddress = customFieldManager.getCustomFieldObject("customfield_10229");
+def consigneeAddressValue = issue.getCustomFieldValue(consigneeAddress)
+CustomField consigneeCity = customFieldManager.getCustomFieldObject("customfield_10230");
+def consigneeCityValue = issue.getCustomFieldValue(consigneeCity)
+CustomField consigneeState = customFieldManager.getCustomFieldObject("customfield_10233");
+def consigneeStateValue = issue.getCustomFieldValue(consigneeState)
+CustomField consigneeZipcode = customFieldManager.getCustomFieldObject("customfield_10231");
+def consigneeZipcodeValue = issue.getCustomFieldValue(consigneeZipcode)
+CustomField consigneeCountry = customFieldManager.getCustomFieldObject("customfield_10232");
+def consigneeCountryValue = issue.getCustomFieldValue(consigneeCountry)
+def delivery_by = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10600"));
+
+//Destination Attributes
+CustomField consigneeName = customFieldManager.getCustomFieldObject("customfield_10413");
+def consigneeNameValue = issue.getCustomFieldValue(consigneeName)
+CustomField consigneePhone = customFieldManager.getCustomFieldObject("customfield_10414");
+def consigneePhoneValue = issue.getCustomFieldValue(consigneePhone)
+CustomField consigneeEmail = customFieldManager.getCustomFieldObject("customfield_10415");
+def consigneeEmailValue = issue.getCustomFieldValue(consigneeEmail)
+
+//cargo1_attributes
+CustomField cargo1_desc_obj = customFieldManager.getCustomFieldObject("customfield_10235");
+cargo1_desc_obj
+String cargo1_desc = issue.getCustomFieldValue(cargo1_desc_obj)
+
+CustomField cargo1_newdesc_obj = customFieldManager.getCustomFieldObject("customfield_10714");
+String cargo1_newdesc = issue.getCustomFieldValue(cargo1_newdesc_obj)
+
+CustomField cargo1_quantity_obj = customFieldManager.getCustomFieldObject("customfield_10237");
+Double cargo1_quantity = issue.getCustomFieldValue(cargo1_quantity_obj) as Double
+CustomField cargo1_quantity_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10238");
+def cargo1_quantity_unit_id = issue.getCustomFieldValue(cargo1_quantity_unit_id_obj)
+CustomField cargo1_code_obj = customFieldManager.getCustomFieldObject("customfield_10236");
+def cargo1_code = issue.getCustomFieldValue(cargo1_code_obj)
+CustomField cargo1_project_obj = customFieldManager.getCustomFieldObject("customfield_10239");
+def cargo1_project = issue.getCustomFieldValue(cargo1_project_obj)
+CustomField cargo1_batch_number_obj = customFieldManager.getCustomFieldObject("customfield_10240");
+def cargo1_batch_number = issue.getCustomFieldValue(cargo1_batch_number_obj)
+def cargo1_lot_number = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10601"))
+CustomField cargo1_package_type_id_obj = customFieldManager.getCustomFieldObject("customfield_10241");
+def cargo1_package_type_id = issue.getCustomFieldValue(cargo1_package_type_id_obj)
+CustomField cargo1_weight_obj = customFieldManager.getCustomFieldObject("customfield_10242");
+Integer cargo1_weight = issue.getCustomFieldValue(cargo1_weight_obj) as Integer
+CustomField cargo1_weight_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10243");
+def cargo1_weight_unit_id = issue.getCustomFieldValue(cargo1_weight_unit_id_obj)
+CustomField cargo1_length_obj = customFieldManager.getCustomFieldObject("customfield_10244");
+Integer cargo1_length = issue.getCustomFieldValue(cargo1_length_obj) as Integer
+CustomField cargo1_length_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10245");
+def cargo1_length_unit_id = issue.getCustomFieldValue(cargo1_length_unit_id_obj)
+CustomField cargo1_width_obj = customFieldManager.getCustomFieldObject("customfield_10246");
+def cargo1_breadth = issue.getCustomFieldValue(cargo1_width_obj)
+CustomField cargo1_width_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10247");
+def cargo1_breadth_unit_id = issue.getCustomFieldValue(cargo1_width_unit_id_obj)
+CustomField cargo1_height_obj = customFieldManager.getCustomFieldObject("customfield_10248");
+def cargo1_height = issue.getCustomFieldValue(cargo1_height_obj)
+CustomField cargo1_height_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10249");
+def cargo1_height_unit_id = issue.getCustomFieldValue(cargo1_height_unit_id_obj)
+CustomField cargo1_temperature_control_obj = customFieldManager.getCustomFieldObject("customfield_10250");
+def cargo1_temperature_control = issue.getCustomFieldValue(cargo1_temperature_control_obj)
+CustomField cargo1_lower_temperature_obj = customFieldManager.getCustomFieldObject("customfield_10251");
+def cargo1_lower_temperature = issue.getCustomFieldValue(cargo1_lower_temperature_obj)
+CustomField cargo1_lower_temperature_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10252");
+def cargo1_lower_temperature_unit_id = issue.getCustomFieldValue(cargo1_lower_temperature_unit_id_obj)
+CustomField cargo1_higher_temperature_obj = customFieldManager.getCustomFieldObject("customfield_10253");
+def cargo1_higher_temperature = issue.getCustomFieldValue(cargo1_higher_temperature_obj)
+CustomField cargo1_higher_temperature_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10254");
+def cargo1_higher_temperature_unit_id = issue.getCustomFieldValue(cargo1_higher_temperature_unit_id_obj)
+CustomField cargo1_refrigerant_id_obj = customFieldManager.getCustomFieldObject("customfield_10255");
+def cargo1_refrigerant_id = issue.getCustomFieldValue(cargo1_refrigerant_id_obj)
+CustomField cargo1_refrigerant_quantity_obj = customFieldManager.getCustomFieldObject("customfield_10256");
+def cargo1_refrigerant_quantity = issue.getCustomFieldValue(cargo1_refrigerant_quantity_obj)
+CustomField cargo1_refrigerant_unit_id_obj = customFieldManager.getCustomFieldObject("customfield_10257");
+def cargo1_refrigerant_unit_id = issue.getCustomFieldValue(cargo1_refrigerant_unit_id_obj)
+
+//Logistics Details
+CustomField logistics1_serviceProvider_obj = customFieldManager.getCustomFieldObject("customfield_10400");
+def logistics1_serviceProvider = issue.getCustomFieldValue(logistics1_serviceProvider_obj)
+CustomField logistics1_companyName_obj = customFieldManager.getCustomFieldObject("customfield_10401");
+def logistics1_companyName = issue.getCustomFieldValue(logistics1_companyName_obj)
+CustomField logistics1_ref1_type_obj = customFieldManager.getCustomFieldObject("customfield_10402");
+def logistics1_ref1_type = issue.getCustomFieldValue(logistics1_ref1_type_obj)
+CustomField logistics1_ref1_obj = customFieldManager.getCustomFieldObject("customfield_10403");
+def logistics1_ref1 = issue.getCustomFieldValue(logistics1_ref1_obj)
+CustomField logistics1_ref2_type_obj = customFieldManager.getCustomFieldObject("customfield_10404");
+def logistics1_ref2_type = issue.getCustomFieldValue(logistics1_ref2_type_obj)
+CustomField logistics1_ref2_obj = customFieldManager.getCustomFieldObject("customfield_10405");
+def logistics1_ref2 = issue.getCustomFieldValue(logistics1_ref2_obj)
+CustomField logistics1_pickupDate_obj = customFieldManager.getCustomFieldObject("customfield_10406");
+def logistics1_pickupDate = issue.getCustomFieldValue(logistics1_pickupDate_obj)
+CustomField logistics1_deliveryDate_obj = customFieldManager.getCustomFieldObject("customfield_10407");
+def logistics1_deliveryDate = issue.getCustomFieldValue(logistics1_deliveryDate_obj)
+
+CustomField logistics1_shippingUrgency_obj = customFieldManager.getCustomFieldObject("customfield_10416");
+def logistics1_shippingUrgency = issue.getCustomFieldValue(logistics1_shippingUrgency_obj)
+
+Integer logistics_supplier_id = 0 as Integer
+
+Integer cargo1_ref_id = 0 as Integer
+def refrigerants_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/refrigerants"))
+for (int i = 0; i < refrigerants_api.id.size(); i++) {
+    if (refrigerants_api.name[i] == cargo1_refrigerant_id.toString()) {
+        cargo1_ref_id = refrigerants_api.id[i]
+    }
+}
+
+//Package Types
+Integer cargo1_packagetype_id = 0 as Integer
+def packageType_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/package_types"))
+for (int i = 0; i < refrigerants_api.id.size(); i++) {
+    if (packageType_api.name[i] == cargo1_package_type_id.toString()) {
+        cargo1_packagetype_id = packageType_api.id[i]
+    }
+}
+
+//Requester Attributes
+def requester_dropdown = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10700"));
+def requester_name = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10410"));
+def requester_phone = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10411"));
+def requester_email = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10412"));
+
+int lowerTemp = 0
+int higherTemp = 0
+
+//temp control
+boolean tempControl_id = false
+
+def temp_control(String tempControl) {
+    if (tempControl == "Yes") {
+        tempControl_id = true;
+        lowerTemp = 78;
+        higerTemp = 89;
+
+    } else {
+        tempControl_id = false;
+        lowerTemp = 0;
+        higerTemp = 0;
+
+    }
+}
+
+//OUMS
+Integer oumId = 0
+
+def findOUM_Id(def oum) {
+    //oumId=findId
+
+    if (oum == "each")
+        oumId = 1
+    else if (oum == "kilograms")
+        oumId = 2
+    else if (oum == "grams")
+        oumId = 3
+    else if (oum == "pounds")
+        oumId = 4
+    else if (oum == "ounces")
+        oumId = 5
+    else if (oum == "liters")
+        oumId = 6
+    else if (oum == "milliliters")
+        oumId = 7
+    else if (oum == "gallons")
+        oumId = 8
+    else if (oum == "fluid ounces")
+        oumId = 9
+    else if (oum == "feet")
+        oumId = 10
+    else if (oum == "inches")
+        oumId = 11
+    else if (oum == "meters")
+        oumId = 12
+    else if (oum == "centimeters")
+        oumId = 13
+    else if (oum == "Celsius")
+        oumId = 14
+    else if (oum == "Fahrenheit")
+        oumId = 15
+    else
+        oumId = null
+
+}
+
+def updateTempControl(def tempControl, def tempControlUOM) {
+    if (tempControl.toString() == "Yes") {
+        findOUM_Id(tempControlUOM.toString())
+    } else {
+        findOUM_Id(0)
+    }
+}
+
+//Shipper Consignee State | Country ID
+def country_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/countries/with_states"))
+def comp = country_api.findAll { it.name == "${shipperCountryValue}" }
+int shipperCountryId = comp[0].id
+int shipperStateId
+
+def shipperStateList = comp[0].states.findAll { it.name == "${shiperStateValue}" }
+shipperStateId = shipperStateList[0].id
+
+def consigneeCountryObj = country_api.findAll { it.name == "${consigneeCountryValue}" }
+int consigneeCountryId = consigneeCountryObj[0].id
+
+int consigneeStateId
+
+def consigneeStateList = comp[0].states.findAll { it.name == "${consigneeStateValue}" }
+consigneeStateId = consigneeStateList[0].id
+
+def data = ""
+def output = ""
+
+def cargoDefaulData = [
+    	"description"               : "blank",    
+    	"quantity"                  : null,
+        "quantity_unit_id"          : null,
+        "material_id_number"        : null,
+        "project"                   : null,
+        "batch_number"              : null,
+        "lot_number"                : null,
+        "weight"                    : null,
+        "weight_unit_id"            : null,
+        "length"                    : null,
+        "length_unit_id"            : null,
+        "height"                    : null,
+        "height_unit_id"            : null,
+        "breadth"                   : null,
+        "breadth_unit_id"           : null,
+        "temperature_control"       : null,
+        "lower_temperature"         : null,
+        "lower_temperature_unit_id" : null,
+        "higher_temperature"        : null,
+        "higher_temperature_unit_id": null,
+        "refrigerant_id"            : null,
+        "refrigerant_quantity"      : null,
+        "refrigerant_unit_id"       : null,
+        "package_type_id"           : null
+]
+//Dynamic Parameters
+def optionsManager = ComponentAccessor.getOptionsManager()
+def issueService = ComponentAccessor.getIssueService()
+//def currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+def currentUser = ComponentAccessor.userManager.getUserByName("wa.script")
+def issueInputParameters = issueService.newIssueInputParameters()
+
+String selectShipper = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10220"))
+
+if (("${selectShipper}" == "Add New") && ("${consigneeValue}" == "Add New")) {
+    data = [
+            jira_ticket_id             : "${issueKey}",
+            master_shipper_company_name: "${master_shipper_company_name}",
+            request_type               : "${request_type}",
+
+            "origin_attributes"        : [
+                    "contact_attributes": [
+                            name         : "${shipperNameValue}",
+                            phone        : "${shipperPhoneValue}",
+                            email_address: "${shipperEmailValue}"
+                    ],
+                    "shipper_attributes": [
+                            name      : "${shipperCompanyValue}",
+                            address   : "${shipperAddressValue}",
+                            city      : "${shipperCityValue}",
+                            state_id  : shipperStateId,
+                            zipcode   : "${shiperZipcodeValue}",
+                            country_id: shipperCountryId
+                    ],
+                    ready_to_ship_by    : "${ready_to_ship_by}"
+            ],
+            "destination_attributes"   : [
+                    "contact_attributes"  : [
+                            name         : "${consigneeNameValue}",
+                            phone        : "${consigneePhoneValue}",
+                            email_address: "${consigneeEmailValue}"
+                    ],
+                    "consignee_attributes": [
+                            name      : "${consigneeCompanyValue}",
+                            address   : "${consigneeAddressValue}",
+                            city      : "${consigneeCityValue}",
+                            state_id  : consigneeStateId,
+                            zipcode   : "${consigneeZipcodeValue}",
+                            country_id: consigneeCountryId
+                    ],
+                    delivery_by           : "${delivery_by}"
+            ],
+            "requester_attributes"     : buildRequesterPayload(requester_dropdown, requester_name, requester_phone, requester_email, issueKey),
+            "logistics_info_attributes": [
+                    "picked_up_on"                 : "${logistics1_pickupDate}",
+                    "delivered_on"                 : "${logistics1_deliveryDate}",
+                    "shipping_urgency"             : "${logistics1_shippingUrgency}",
+                    "logistics_supplier_attributes": buildLogisticCompanyPayload(logistics1_serviceProvider, logistics1_companyName),
+            ],
+            "cargo_infos_attributes"   : [
+                    [
+                            "quantity"                  : cargo1_quantity,
+                            "food_sample_id"            : "${getVarietyId(cargo1_desc)}",
+                            "description"               : "${getDescription(cargo1_newdesc, cargo1_desc)}",
+                            "quantity_unit_id"          : findOUM_Id("${cargo1_quantity_unit_id}"),
+                            "material_id_number"        : "${cargo1_code}",
+                            "project"                   : "${cargo1_project}",
+                            "batch_number"              : "${cargo1_batch_number}",
+                            "lot_number"                : "${cargo1_lot_number}",
+                            "weight"                    : cargo1_weight,
+                            "weight_unit_id"            : findOUM_Id("${cargo1_weight_unit_id}"),
+                            "length"                    : cargo1_length,
+                            "length_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                            "height"                    : cargo1_height,
+                            "height_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                            "breadth"                   : cargo1_breadth,
+                            "breadth_unit_id"           : findOUM_Id("${cargo1_height_unit_id}"),
+                            "temperature_control"       : temp_control("${cargo1_temperature_control}"),
+                            "lower_temperature"         : lowerTemp, //"${cargo1_lower_temperature}",
+                            "lower_temperature_unit_id" : updateTempControl(cargo1_temperature_control, cargo1_lower_temperature_unit_id),
+                            "higher_temperature"        : higerTemp, //"${cargo1_higher_temperature}",
+                            "higher_temperature_unit_id": updateTempControl(cargo1_temperature_control, cargo1_higher_temperature_unit_id),
+                            "refrigerant_id"            : cargo1_ref_id,
+                            "refrigerant_quantity"      : cargo1_refrigerant_quantity,
+                            "refrigerant_unit_id"       : findOUM_Id("${cargo1_refrigerant_unit_id}"),
+                            "package_type_id"           : cargo1_packagetype_id
+                    ],
+                    cargoDefaulData,
+                    cargoDefaulData,
+                    cargoDefaulData,
+                    cargoDefaulData
+            ]
+    ]
+    //Add Dynamically Shipper and Consignee
+    //Shipper
+    def shipperFieldConfig = shipperCompanyName.getRelevantConfig(issue)
+    def currentOptions = optionsManager.getOptions(shipperFieldConfig)
+    def newSeqId = currentOptions*.sequence.max() - 1
+    def option = optionsManager.createOption(shipperFieldConfig, null, newSeqId, shipperCompanyValue)
+
+    issueInputParameters.with {
+        addCustomFieldValue((String) shipperCompanyName, option.optionId.toString())
+        addCustomFieldValue(shipperCompanyValue, null)
+    }
+    def updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+    if (updateValidationResult.isValid()) {
+        issueService.update(currentUser, updateValidationResult)
+    } else {
+        return "Failed to update issue: ${issue.key}: ${updateValidationResult.errorCollection}"
+    }
+    //Consignee
+    def consigneeFieldConfig = consignee.getRelevantConfig(issue)
+    def consigneeCurrentOptions = optionsManager.getOptions(consigneeFieldConfig)
+    def consigneeNewSeqId = consigneeCurrentOptions*.sequence.max() - 1
+    def consigneeOption = optionsManager.createOption(consigneeFieldConfig, null, consigneeNewSeqId, consigneeCompanyValue)
+    issueInputParameters.with {
+        addCustomFieldValue((String) consignee, consigneeOption.optionId.toString())
+        addCustomFieldValue(consigneeCompanyValue, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+
+    //Shipper Contact
+    CustomField shipper_Contact = customFieldManager.getCustomFieldObject("customfield_10222");
+    String shipperContatName = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10223"));
+    def shipperContactFieldConfig = shipper_Contact.getRelevantConfig(issue)
+    currentOptions = optionsManager.getOptions(shipperContactFieldConfig)
+    newSeqId = currentOptions*.sequence.max() - 1
+    option = optionsManager.createOption(shipperContactFieldConfig, null, newSeqId, shipperContatName)
+    issueInputParameters = issueService.newIssueInputParameters()
+    issueInputParameters.with {
+        addCustomFieldValue((String) shipper_Contact, option.optionId.toString())
+        addCustomFieldValue(shipperContatName, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+
+    //Shipper Contact
+    def masterShipperConfig = shipper.getRelevantConfig(issue)
+    currentOptions = optionsManager.getOptions(masterShipperConfig)
+    newSeqId = currentOptions*.sequence.max() - 1
+    option = optionsManager.createOption(masterShipperConfig, null, newSeqId, master_shipper_company_name)
+    issueInputParameters = issueService.newIssueInputParameters()
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+
+    //Requester
+    CustomField requester = customFieldManager.getCustomFieldObject("customfield_10700");
+    //  String requester_dropdown, requester_name = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10410")) ;
+    def requesterConfig = requester.getRelevantConfig(issue)
+    currentOptions = optionsManager.getOptions(requesterConfig)
+    newSeqId = currentOptions*.sequence.max() - 1
+    option = optionsManager.createOption(requesterConfig, null, newSeqId, requester_name)
+    issueInputParameters = issueService.newIssueInputParameters()
+    issueInputParameters.with {
+        addCustomFieldValue((String) requester, option.optionId.toString())
+        addCustomFieldValue(requester_name, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+    output = JsonOutput.toJson(data)
+    sendEmail(output)
+    generateJSON(data)
+
+} else if (("${shipperCompanyNameValue}" != "Add New") && ("${consigneeValue}" != "Add New")) {
+    //replace ShipperValue --> ShipperCompanyValue 12/21/2020
+    def company_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/companies"))
+    def shipperComp = company_api.findAll { it.name == "${shipperCompanyNameValue}" }
+    int shipperId = shipperComp[0].id
+
+    def consigneeComp = company_api.findAll { it.name == "${consigneeValue}" }
+    int consigneeId = consigneeComp[0].id
+
+    def shipperContacts_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts?company_id=" + shipperId))
+    int shipperContactId = shipperContacts_api[0].id
+
+    def consigneeContacts_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts?company_id=" + consigneeId))
+    int consigneeContactId = consigneeContacts_api[0].id
+
+        data = [
+                jira_ticket_id             : "${issueKey}",
+                master_shipper_company_name: "${master_shipper_company_name}",
+                request_type               : "${request_type}",
+                "origin_attributes"        : [
+                        "contact_attributes": [
+                                id: shipperContactId
+                        ],
+                        "shipper_attributes": [
+                                id: shipperId
+                        ],
+                        ready_to_ship_by    : "${ready_to_ship_by}"
+                ],
+
+                "destination_attributes"   : [
+                        "contact_attributes"  : [
+                                id: consigneeContactId
+                        ],
+                        "consignee_attributes": [
+                                id: consigneeId
+
+                        ],
+                        delivery_by           : "${delivery_by}"
+                ],
+                "requester_attributes"     : buildRequesterPayload(requester_dropdown, requester_name, requester_phone, requester_email, issueKey),
+                "logistics_info_attributes": [
+                        "picked_up_on"                 : "${logistics1_pickupDate}",
+                        "delivered_on"                 : "${logistics1_deliveryDate}",
+                        "shipping_urgency"             : "${logistics1_shippingUrgency}",
+                        "logistics_supplier_attributes": buildLogisticCompanyPayload(logistics1_serviceProvider, logistics1_companyName),
+                ],
+                "cargo_infos_attributes"   : [
+                        [
+                                "quantity"                  : cargo1_quantity,
+                                "food_sample_id"            : "${getVarietyId(cargo1_desc)}",
+                                "description"               : "${getDescription(cargo1_newdesc, cargo1_desc)}",
+                                "quantity_unit_id"          : findOUM_Id("${cargo1_quantity_unit_id}"),
+                                "material_id_number"        : "${cargo1_code}",
+                                "project"                   : "${cargo1_project}",
+                                "batch_number"              : "${cargo1_batch_number}",
+                                "lot_number"                : "${cargo1_lot_number}",
+                                "weight"                    : cargo1_weight,
+                                "weight_unit_id"            : findOUM_Id("${cargo1_weight_unit_id}"),
+                                "length"                    : cargo1_length,
+                                "length_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "height"                    : cargo1_height,
+                                "height_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "breadth"                   : cargo1_breadth,
+                                "breadth_unit_id"           : findOUM_Id("${cargo1_height_unit_id}"),
+                                "temperature_control"       : temp_control("${cargo1_temperature_control}"),
+                                "lower_temperature"         : lowerTemp, //"${cargo1_lower_temperature}",
+                                "lower_temperature_unit_id" : updateTempControl(cargo1_temperature_control, cargo1_lower_temperature_unit_id),
+                                "higher_temperature"        : higerTemp, //"${cargo1_higher_temperature}",
+                                "higher_temperature_unit_id": updateTempControl(cargo1_temperature_control, cargo1_higher_temperature_unit_id),
+                                "refrigerant_id"            : cargo1_ref_id,
+                                "refrigerant_quantity"      : cargo1_refrigerant_quantity,
+                                "refrigerant_unit_id"       : findOUM_Id("${cargo1_refrigerant_unit_id}"),
+                                "package_type_id"           : cargo1_packagetype_id
+                        ],
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData
+                ]
+        ]
+    output = JsonOutput.toJson(data)
+    sendEmail(output)
+    generateJSON(data)
+} else if (("${consigneeValue}" == "Add New") && ("${shipperCompanyNameValue}" != "Add New")) {
+    def company_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/companies"))
+    def shipperComp = company_api.findAll { it.name == "${shipperCompanyNameValue}" }
+    int shipperId = shipperComp[0].id
+    def shipperContacts_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts?company_id=" + shipperId))
+    int shipperContactId = shipperContacts_api[0].id
+    
+        data = [
+                jira_ticket_id             : "${issueKey}",
+                master_shipper_company_name: "${master_shipper_company_name}",
+                request_type               : "${request_type}",
+                "origin_attributes"        : [
+                        "contact_attributes": [
+                                id: shipperContactId
+                        ],
+                        "shipper_attributes": [
+                                id: shipperId
+                        ],
+                        ready_to_ship_by    : "${ready_to_ship_by}"
+                ],
+                "destination_attributes"   : [
+                        "contact_attributes"  : [
+                                name         : "${consigneeNameValue}",
+                                phone        : "${consigneePhoneValue}",
+                                email_address: "${consigneeEmailValue}"
+                        ],
+                        "consignee_attributes": [
+                                name      : "${consigneeCompanyValue}",
+                                address   : "${consigneeAddressValue}",
+                                city      : "${consigneeCityValue}",
+                                state_id  : consigneeStateId,
+                                zipcode   : "${consigneeZipcodeValue}",
+                                country_id: consigneeCountryId
+                        ],
+                        delivery_by           : "${delivery_by}"
+                ],
+                "requester_attributes"     : buildRequesterPayload(requester_dropdown, requester_name, requester_phone, requester_email, issueKey),
+                "logistics_info_attributes": [
+                        "picked_up_on"                 : "${logistics1_pickupDate}",
+                        "delivered_on"                 : "${logistics1_deliveryDate}",
+                        "shipping_urgency"             : "${logistics1_shippingUrgency}",
+                        "logistics_supplier_attributes": buildLogisticCompanyPayload(logistics1_serviceProvider, logistics1_companyName),
+                ],
+
+                "cargo_infos_attributes"   : [
+                        [
+                                "quantity"                  : cargo1_quantity,
+                                "food_sample_id"            : "${getVarietyId(cargo1_desc)}",
+                                "description"               : "${getDescription(cargo1_newdesc, cargo1_desc)}",
+                                "quantity_unit_id"          : findOUM_Id("${cargo1_quantity_unit_id}"),
+                                "material_id_number"        : "${cargo1_code}",
+                                "project"                   : "${cargo1_project}",
+                                "batch_number"              : "${cargo1_batch_number}",
+                                "lot_number"                : "${cargo1_lot_number}",
+                                "weight"                    : cargo1_weight,
+                                "weight_unit_id"            : findOUM_Id("${cargo1_weight_unit_id}"),
+                                "length"                    : cargo1_length,
+                                "length_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "height"                    : cargo1_height,
+                                "height_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "breadth"                   : cargo1_breadth,
+                                "breadth_unit_id"           : findOUM_Id("${cargo1_height_unit_id}"),
+                                "temperature_control"       : temp_control("${cargo1_temperature_control}"),
+                                "lower_temperature"         : lowerTemp, //"${cargo1_lower_temperature}",
+                                "lower_temperature_unit_id" : updateTempControl(cargo1_temperature_control, cargo1_lower_temperature_unit_id),
+                                "higher_temperature"        : higerTemp, //"${cargo1_higher_temperature}",
+                                "higher_temperature_unit_id": updateTempControl(cargo1_temperature_control, cargo1_higher_temperature_unit_id),
+                                "refrigerant_id"            : cargo1_ref_id,
+                                "refrigerant_quantity"      : cargo1_refrigerant_quantity,
+                                "refrigerant_unit_id"       : findOUM_Id("${cargo1_refrigerant_unit_id}"),
+                                "package_type_id"           : cargo1_packagetype_id
+                        ],
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData
+                ]
+        ]
+ 
+    output = JsonOutput.toJson(data)
+
+    //Dynamically add Consignee to list
+    //Consignee
+    def consigneeFieldConfig = consignee.getRelevantConfig(issue)
+    def consigneeCurrentOptions = optionsManager.getOptions(consigneeFieldConfig)
+    def consigneeNewSeqId = consigneeCurrentOptions*.sequence.max() - 1
+    def consigneeOption = optionsManager.createOption(consigneeFieldConfig, null, consigneeNewSeqId, consigneeCompanyValue)
+    issueInputParameters.with {
+        addCustomFieldValue((String) consignee, consigneeOption.optionId.toString())
+        addCustomFieldValue(consigneeCompanyValue, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+
+    //Requester
+    CustomField requester = customFieldManager.getCustomFieldObject("customfield_10700");
+    //  String requester_name = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10410")) ;
+    def requesterConfig = requester.getRelevantConfig(issue)
+    currentOptions = optionsManager.getOptions(requesterConfig)
+    newSeqId = currentOptions*.sequence.max() - 1
+    option = optionsManager.createOption(requesterConfig, null, newSeqId, requester_name)
+    issueInputParameters = issueService.newIssueInputParameters()
+    issueInputParameters.with {
+        addCustomFieldValue((String) requester, option.optionId.toString())
+        addCustomFieldValue(requester_name, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+
+//return output
+
+    sendEmail(output)
+    generateJSON(data)
+
+} else if (("${consigneeValue}" != "Add New") && ("${shipperCompanyNameValue}" == "Add New")) {
+
+
+//Integer consigneeId= "${consigneeValue}".replaceAll("[^0-9]", "") as Integer
+    def company_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/companies"))
+
+    def consigneeComp = company_api.findAll { it.name == "${consigneeValue}" }
+    int consigneeId = consigneeComp[0].id
+
+    def consigneeContacts_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts?company_id=" + consigneeId))
+    int consigneeContactId = consigneeContacts_api[0].id
+
+        data = [
+                jira_ticket_id             : "${issueKey}",
+                master_shipper_company_name: "${master_shipper_company_name}",
+                request_type               : "${request_type}",
+                "origin_attributes"        : [
+                        "contact_attributes": [
+                                name         : "${shipperNameValue}",
+                                phone        : "${shipperPhoneValue}",
+                                email_address: "${shipperEmailValue}"
+                        ],
+                        "shipper_attributes": [
+                                name      : "${shipperCompanyValue}",
+                                address   : "${shipperAddressValue}",
+                                city      : "${shipperCityValue}",
+                                state_id  : shipperStateId,
+                                zipcode   : "${shiperZipcodeValue}",
+                                country_id: shipperCountryId
+                        ],
+                        ready_to_ship_by    : "${ready_to_ship_by}"
+                ],
+                "destination_attributes"   : [
+                        "contact_attributes"  : [
+                                id: consigneeContactId
+                        ],
+                        "consignee_attributes": [
+                                id: consigneeId
+                        ],
+                        delivery_by           : "${delivery_by}"
+                ],
+                "requester_attributes"     : buildRequesterPayload(requester_dropdown, requester_name, requester_phone, requester_email, issueKey),
+                "logistics_info_attributes": [
+                        "picked_up_on"                 : "${logistics1_pickupDate}",
+                        "delivered_on"                 : "${logistics1_deliveryDate}",
+                        "shipping_urgency"             : "${logistics1_shippingUrgency}",
+                        "logistics_supplier_attributes": buildLogisticCompanyPayload(logistics1_serviceProvider, logistics1_companyName),
+                ],
+
+                "cargo_infos_attributes"   : [
+                        [
+                                "quantity"                  : cargo1_quantity,
+                                "food_sample_id"            : "${getVarietyId(cargo1_desc)}",
+                                "description"               : "${getDescription(cargo1_newdesc, cargo1_desc)}",
+                                "quantity_unit_id"          : findOUM_Id("${cargo1_quantity_unit_id}"),
+                                "material_id_number"        : "${cargo1_code}",
+                                "project"                   : "${cargo1_project}",
+                                "batch_number"              : "${cargo1_batch_number}",
+                                "lot_number"                : "${cargo1_lot_number}",
+                                "weight"                    : cargo1_weight,
+                                "weight_unit_id"            : findOUM_Id("${cargo1_weight_unit_id}"),
+                                "length"                    : cargo1_length,
+                                "length_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "height"                    : cargo1_height,
+                                "height_unit_id"            : findOUM_Id("${cargo1_height_unit_id}"),
+                                "breadth"                   : cargo1_breadth,
+                                "breadth_unit_id"           : findOUM_Id("${cargo1_height_unit_id}"),
+                                "temperature_control"       : temp_control("${cargo1_temperature_control}"),
+                                "lower_temperature"         : lowerTemp, //"${cargo1_lower_temperature}",
+                                "lower_temperature_unit_id" : updateTempControl(cargo1_temperature_control, cargo1_lower_temperature_unit_id),
+                                "higher_temperature"        : higerTemp, //"${cargo1_higher_temperature}",
+                                "higher_temperature_unit_id": updateTempControl(cargo1_temperature_control, cargo1_higher_temperature_unit_id),
+                                "refrigerant_id"            : cargo1_ref_id,
+                                "refrigerant_quantity"      : cargo1_refrigerant_quantity,
+                                "refrigerant_unit_id"       : findOUM_Id("${cargo1_refrigerant_unit_id}"),
+                                "package_type_id"           : cargo1_packagetype_id
+                        ],
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData,
+                        cargoDefaulData
+                ]
+        ]
+   
+    output = JsonOutput.toJson(data)
+
+    //Shipper
+    def shipperFieldConfig = shipperCompanyName.getRelevantConfig(issue)
+    def currentOptions = optionsManager.getOptions(shipperFieldConfig)
+    def newSeqId = currentOptions*.sequence.max() - 1
+    def option = optionsManager.createOption(shipperFieldConfig, null, newSeqId, shipperCompanyValue)
+
+    issueInputParameters.with {
+        addCustomFieldValue((String) shipperCompanyName, option.optionId.toString())
+        addCustomFieldValue(shipperCompanyValue, null)
+    }
+    def updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+    if (updateValidationResult.isValid()) {
+        issueService.update(currentUser, updateValidationResult)
+    } else {
+        return "Failed to update issue: ${issue.key}: ${updateValidationResult.errorCollection}"
+    }
+
+    //Requester
+    CustomField requester = customFieldManager.getCustomFieldObject("customfield_10700");
+    //  String requester_name = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10410")) ;
+    def requesterConfig = requester.getRelevantConfig(issue)
+    currentOptions = optionsManager.getOptions(requesterConfig)
+    newSeqId = currentOptions*.sequence.max() - 1
+    option = optionsManager.createOption(requesterConfig, null, newSeqId, requester_name)
+    issueInputParameters = issueService.newIssueInputParameters()
+    issueInputParameters.with {
+        addCustomFieldValue((String) requester, option.optionId.toString())
+        addCustomFieldValue(requester_name, null)
+    }
+    updateValidationResult = issueService.validateUpdate(currentUser, issue.id, issueInputParameters)
+    sendEmail(output)
+    generateJSON(data)
+
+} else {
+    return "Else Executed"
+}
+
+//Send Email
+def sendEmail(String output) {
+    MailServerManager mailServerManager = ComponentAccessor.getMailServerManager()
+    SMTPMailServer mailServer = mailServerManager.getDefaultSMTPMailServer()
+    def emailAddr = "krupasindhu.n@westagilelabs.com"
+    Email email = new Email(emailAddr)
+    email.setMimeType("text/html")
+    email.setSubject("Perfectday Json");
+    email.setBody(output)
+    ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader()
+    Thread.currentThread().setContextClassLoader(SMTPMailServer.class.classLoader)
+    mailServer.send(email);
+    Thread.currentThread().setContextClassLoader(threadClassLoader)
+}
+
+def generateJSON(Object data) {
+    def baseurl = "https://perfect-day-demo.herokuapp.com/api/consignments.json"
+    def url = new URL(baseurl)
+    HttpURLConnection connection = url.openConnection() as HttpURLConnection;
+    connection.requestMethod = "POST"
+    connection.doOutput = true
+    connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
+    connection.outputStream
+    connection.outputStream.withWriter("UTF-8") { new StreamingJsonBuilder(it, data) }
+    connection.connect();
+    connection.getResponseCode()
+}
+
+def isNullOrEmpty(String string) {
+    //Check four condition 1. null, 2. "", 3. "null", 4. "Add New"
+    if (string == null || string == "" || string == "null" || string == "Add New")
+        return true;
+    else
+        return false;
+}
+
+def getDescription(String opt1, String opt2) {
+    if (!isNullOrEmpty(opt1)) {
+        return opt1
+    } else if (!isNullOrEmpty(opt2)) {
+        return opt2
+    } else {
+        return null;
+    }
+}
+
+def getVarietyId(def cargoDesc) {
+    if (cargoDesc == "Add New")
+        return null
+    def partListAPI = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/part_lists"))
+    def partListObj = partListAPI.findAll {
+        it.name == "${cargoDesc}"
+    }
+    if (partListObj[0] != null) {
+        def varietyId = partListObj[0].id
+        return varietyId
+    } else {
+        return null;
+    }
+}
+
+def getRequesterId(def requesterName) {
+    def requesterAPI = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/requesters"))
+    def requesterObj = requesterAPI.findAll { it.name == "${requesterName}" }
+    return requesterObj[0] != null ? requesterObj[0].id : null
+}
+
+def getLogisticCompanyId(def logisticCompanyName) {
+    def logisticCompanyAPI = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/logistics_suppliers"))
+    def logisticCompanyObj = logisticCompanyAPI.findAll { it.name == "${logisticCompanyName}" }
+    return logisticCompanyObj[0] != null ? logisticCompanyObj[0].id : null
+}
+
+def buildRequesterPayload(def requester_dropdown, def requester_name, def requester_phone, def requester_email, def issueKey) {
+    def payLoad
+    if ("Add New".equalsIgnoreCase("${requester_dropdown}")) {
+        payLoad = [
+                name         : "${requester_name}",
+                phone_number : "${requester_phone}",
+                email_address: "${requester_email}",
+                ticket_number: "${issueKey}"
+        ]
+    } else {
+        payLoad = [id: getRequesterId("${requester_dropdown}")]
+    }
+    return payLoad
+}
+
+def buildLogisticCompanyPayload(def logisticsCompanyDropDown, def logisticsCompanyName) {
+    def payLoad
+    if ("Add New".equalsIgnoreCase("${logisticsCompanyDropDown}")) {
+        payLoad = [name: "${logisticsCompanyName}"]
+    } else {
+        //payLoad = [id: getLogisticCompanyId("${logisticsCompanyDropDown}")]
+        payLoad = [name: "${logisticsCompanyName}"]
+    }
+    return payLoad
+}
