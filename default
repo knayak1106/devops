@@ -1,0 +1,82 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+
+
+//Issue issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("PERFECTDAY-560")
+
+//Logistics
+def reference1 = ComponentAccessor.getCustomFieldManager().getCustomFieldObject('customfield_10403')
+def reference2 = ComponentAccessor.getCustomFieldManager().getCustomFieldObject('customfield_10405')
+def pickupDate = ComponentAccessor.getCustomFieldManager().getCustomFieldObject('customfield_10406')
+def deliveryDate = ComponentAccessor.getCustomFieldManager().getCustomFieldObject('customfield_10407')
+
+def shipperCompanyName = ComponentAccessor.getCustomFieldManager().getCustomFieldObject('customfield_10702')
+
+//Cargos
+String[][] ids = [
+        ["customfield_10237", "customfield_10239", "customfield_10240", "customfield_10601", "customfield_10242", "customfield_10244", "customfield_10246", "customfield_10248"],
+        ["customfield_10266", "customfield_10268", "customfield_10269","customfield_10703", "customfield_10271", "customfield_10273", "customfield_10274", "customfield_10277"],
+        ["customfield_10291", "customfield_10293", "customfield_10294", "customfield_10704", "customfield_10296", "customfield_10298", "customfield_10300", "customfield_10302"],
+        ["customfield_10317", "customfield_10319", "customfield_10320", "customfield_10705", "customfield_10322", "customfield_10324", "customfield_10326", "customfield_10328"],
+        ["customfield_10342", "customfield_10344", "customfield_10345", "customfield_10706", "customfield_10347", "customfield_10349", "customfield_10351", "customfield_10353"]
+]
+
+for (int i = 0; i < ids.length; i++) {
+    def quantity = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][0])
+    def projectName = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][1])
+    def batchNumber = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][2])
+    def lotNumber = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][3])
+    def grossWeight = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][4])
+    def lenght = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][5])
+    def width = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][6])
+    def height = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(ids[i][7])
+
+
+    if (issue.getCustomFieldValue(quantity) == null) {
+        setDefaultValue(quantity)
+    }
+    if (issue.getCustomFieldValue(projectName) == null) {
+        setDefaultValue(projectName)
+    }
+    if (issue.getCustomFieldValue(batchNumber) == null) {
+        setDefaultValue(batchNumber)
+    }
+    if (issue.getCustomFieldValue(lotNumber) == null) {
+        setDefaultValue(lotNumber)
+    }
+    if (issue.getCustomFieldValue(grossWeight) == null) {
+        setDefaultValue(grossWeight)
+    }
+    if (issue.getCustomFieldValue(lenght) == null) {
+        setDefaultValue(lenght)
+    }
+    if (issue.getCustomFieldValue(width) == null) {
+        setDefaultValue(width)
+    }
+    if (issue.getCustomFieldValue(height) == null) {
+        setDefaultValue(height)
+    }
+}
+//Logistics
+if(issue.getCustomFieldValue(reference1)==null){setDefaultValue(reference1)}
+if(issue.getCustomFieldValue(reference2)==null){setDefaultValue(reference2)}
+if(issue.getCustomFieldValue(pickupDate)==null){setDefaultValue(pickupDate)}
+if(issue.getCustomFieldValue(deliveryDate)==null){setDefaultValue(deliveryDate)}
+
+if(issue.getCustomFieldValue(shipperCompanyName)==null){setDefaultValue(shipperCompanyName)}
+
+
+def setDefaultValue(def object) {
+    //Issue issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("PERFECTDAY-560")
+    if (object.getCustomFieldType().getName() == "Text Field (single line)") {
+        object.updateValue(null, issue, new ModifiedValue(issue.getCustomFieldValue(object), "blank"), new DefaultIssueChangeHolder())
+    } else if (object.getCustomFieldType().getName() == "Text Field (multi-line)") {
+        object.updateValue(null, issue, new ModifiedValue(issue.getCustomFieldValue(object), "blank"), new DefaultIssueChangeHolder())
+    } else if (object.getCustomFieldType().getName() == "Number Field") {
+        object.updateValue(null, issue, new ModifiedValue(issue.getCustomFieldValue(object), 0 as Double), new DefaultIssueChangeHolder())
+    } else if (object.getCustomFieldType().getName() == "Date Picker") {
+        object.updateValue(null, issue, new ModifiedValue(issue.getCustomFieldValue(object), new Date(0).toTimestamp()), new DefaultIssueChangeHolder())
+    }
+}
