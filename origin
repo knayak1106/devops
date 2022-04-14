@@ -1,0 +1,193 @@
+import com.atlassian.jira.issue.CustomFieldManager
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.user.util.UserUtil
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.web.bean.PagerFilter
+ 
+
+import com.atlassian.mail.Email
+import com.atlassian.mail.server.MailServerManager
+import com.atlassian.mail.server.SMTPMailServer
+import com.atlassian.jira.component.ComponentAccessor
+
+import groovy.json.JsonOutput
+import groovy.json.JsonBuilder
+import groovy.json.StreamingJsonBuilder;
+import groovyx.net.http.HTTPBuilder
+import static groovyx.net.http.ContentType.*
+import groovyx.net.http.ContentType
+import static groovyx.net.http.Method.*
+import groovy.json.JsonSlurper
+import net.sf.json.groovy.JsonSlurper
+
+
+
+//CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+
+def data=""
+String output=""
+def jqlSearch="project = PERFECTDAY and updated > -15m"
+SearchService searchService = ComponentAccessor.getComponent(SearchService.class)
+UserUtil userUtil = ComponentAccessor.getUserUtil()
+IssueManager issueManager = ComponentAccessor.getIssueManager()
+def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+List<Issue> issues = null
+SearchService.ParseResult parseResult = searchService.parseQuery(user, jqlSearch)
+if (parseResult.isValid()) {
+ def searchResult = searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter())
+ 
+  issues = searchResult.results.collect { issueManager.getIssueObject(it.id) }
+} else {
+ log.error("Invalid JQL: " + jqlSearch);
+}
+
+CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+def jira_shipperName = customFieldManager.getCustomFieldObject("customfield_10212")
+
+for(int i=0;i<issues.size();i++){
+
+//def issueManager = ComponentAccessor.getIssueManager()
+//def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+
+def issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey(issues[i].toString())
+//-----------------------------------------------G E T  F R O M  J I R A---------------------------------------------------------
+//Issue Attributes
+def issueKey = issue.getKey();
+//def issueStatus = issue.getStatusObject().getName();
+//def request_type = issue.getIssueType().getName();
+// *** Shipping Attributes ***
+def issue_shipping_urgency = customFieldManager.getCustomFieldObject("customfield_10416")
+String issue_shipping_urgency_Value = issue.getCustomFieldValue(issue_shipping_urgency)
+
+
+String jira_shipperName_value = issue.getCustomFieldValue(jira_shipperName)
+
+
+
+def jira_shipperAddress = customFieldManager.getCustomFieldObject("customfield_10213")
+String jira_shipperAddress_value = issue.getCustomFieldValue(jira_shipperAddress)
+
+def jira_shipperCity = customFieldManager.getCustomFieldObject("customfield_10217")
+String jira_shipperCity_value = issue.getCustomFieldValue(jira_shipperCity)
+
+def jira_shipperZipcode = customFieldManager.getCustomFieldObject("customfield_10218")
+String jira_shipperZipcode_value = issue.getCustomFieldValue(jira_shipperZipcode)
+
+def jira_shipperState = customFieldManager.getCustomFieldObject("customfield_10219")
+String jira_shipperState_value = issue.getCustomFieldValue(jira_shipperState)
+
+def jira_shipperCountry = customFieldManager.getCustomFieldObject("customfield_10221")
+String jira_shipperCountry_value = issue.getCustomFieldValue(jira_shipperCountry)
+
+def jira_shippercontactName = customFieldManager.getCustomFieldObject("customfield_10223")
+String jira_shippercontactName_value = issue.getCustomFieldValue(jira_shippercontactName)
+
+def jira_shippercontactPhone = customFieldManager.getCustomFieldObject("customfield_10224")
+String jira_shippercontactPhone_value = issue.getCustomFieldValue(jira_shippercontactPhone)
+
+def jira_shippercontactEmail = customFieldManager.getCustomFieldObject("customfield_10225")
+String jira_shippercontactEmail_value = issue.getCustomFieldValue(jira_shippercontactEmail)
+    
+
+def  readytoShipBy = issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_10226"))
+
+
+//def issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("PERFECTDAY-106")
+    
+//CustomField shipperCompanyName = customFieldManager.getCustomFieldObject("customfield_10220");
+//String shipperCompanyNameValue = issue.getCustomFieldValue(jira_shipperName_value) 
+/*
+def company_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/companies"))
+def shipperComp = company_api.findAll{it.name=="${jira_shipperName_value}"} 
+int shipperId=shipperComp[0].id
+
+def contacts_api=new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts?company_id="+shipperId))
+int contactId= contacts_api[0].id
+*/
+    
+    
+
+def country_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/countries/with_states"))
+def comp = country_api.findAll{it.name=="${jira_shipperCountry_value}"} 
+int shipperCountryId=comp[0].id
+int  shipperStateId
+for(int j=0;j<comp[0].states.name.size();j++){
+    if(comp[0].states.name[j].equals(jira_shipperState_value)){
+        shipperStateId= comp[0].states.id[j]
+        break;
+    }else{
+        shipperStateId=0
+    }
+}
+
+def consigneeCountryObj = country_api.findAll{it.name=="${jira_shipperCountry_value}"} 
+int consigneeCountryId=consigneeCountryObj[0].id
+
+int  consigneeStateId
+
+for(int k=0;i<comp[0].states.name.size();k++){
+    if(consigneeCountryObj[0].states.name[k].equals(jira_shipperState_value)){
+        consigneeStateId= consigneeCountryObj[0].states.id[k]
+        break;
+    }else{
+        consigneeStateId=0
+    }
+}
+
+    
+ 
+    
+    
+def consignment = new JsonSlurper().parse(new URL("https://perfect-day-demo.herokuapp.com/api/consignments/"+issueKey)) 
+int shipperId =consignment.origin_attributes.shipper_attributes.id
+  
+int originId =consignment.origin_attributes.id  
+data=""
+
+
+data=[
+    zipcode:"${jira_shipperZipcode_value}",
+    city:"${jira_shipperCity_value}",
+    address:"${jira_shipperAddress_value}",
+     state_id: shipperStateId,
+    country_id: shipperCountryId
+  
+] 
+   
+    
+def readytoShip=[
+    ready_to_ship_by: "${readytoShipBy}"
+]
+    
+    
+
+def baseurl = "http://perfect-day-demo.herokuapp.com/api/meta/companies/"+shipperId
+    def url = new URL(baseurl)
+    HttpURLConnection connection = url.openConnection() as HttpURLConnection;
+    connection.requestMethod = "PUT"
+    connection.doOutput = true
+    connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
+    connection.outputStream
+    connection.outputStream.withWriter("UTF-8") { new StreamingJsonBuilder(it, data) }
+    connection.connect();
+    output=output+connection.getResponseCode()
+    
+    
+    
+    baseurl = "https://perfect-day-demo.herokuapp.com/api/meta/origins/"+originId
+    url = new URL(baseurl)
+    connection = url.openConnection() as HttpURLConnection;
+    connection.requestMethod = "PUT"
+    connection.doOutput = true
+    connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
+    connection.outputStream
+    connection.outputStream.withWriter("UTF-8") { new StreamingJsonBuilder(it, readytoShip) }
+    connection.connect();
+    connection.getResponseCode()
+
+}
+
+return output
