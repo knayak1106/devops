@@ -1,0 +1,111 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.CustomFieldManager
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.user.util.UserUtil
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.jira.issue.customfields.manager.OptionsManager;
+import com.atlassian.jira.issue.customfields.option.Options;
+import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.fields.config.FieldConfig;
+import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
+import groovy.json.JsonSlurper
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
+
+Logger log = Logger.getLogger(getClass())
+log.setLevel(Level.INFO)
+
+log.info("Refreshing Shipper dropdown from from API")
+
+//Get the issue
+def jqlSearch = "project = PERFECTDAY"
+SearchService searchService = ComponentAccessor.getComponent(SearchService.class)
+UserUtil userUtil = ComponentAccessor.getUserUtil()
+IssueManager issueManager = ComponentAccessor.getIssueManager()
+def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+List<Issue> issues = null
+SearchService.ParseResult parseResult = searchService.parseQuery(user, jqlSearch)
+if (parseResult.isValid()) {
+    def searchResult = searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter())
+    issues = searchResult.results.collect { issueManager.getIssueObject(it.id) }
+} else {
+    log.error("Invalid JQL: " + jqlSearch);
+}
+def issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey(issues[0].toString())
+
+//Iterate over specified companies
+def customFieldIdList = ["customfield_10211", "customfield_10220", "customfield_10227"];
+
+Map map = ["customfield_10211":"http://perfect-day-demo.herokuapp.com/api/meta/companies",
+           "customfield_10220":"http://perfect-day-demo.herokuapp.com/api/meta/companies",
+           "customfield_10227":"http://perfect-day-demo.herokuapp.com/api/meta/companies",
+
+           "customfield_10400":"http://perfect-day-demo.herokuapp.com/api/meta/logistics_suppliers",
+
+           "customfield_10235":"https://perfect-day-demo.herokuapp.com/api/meta/part_lists",
+           "customfield_10264":"https://perfect-day-demo.herokuapp.com/api/meta/part_lists",
+           "customfield_10289":"https://perfect-day-demo.herokuapp.com/api/meta/part_lists",
+           "customfield_10314":"https://perfect-day-demo.herokuapp.com/api/meta/part_lists",
+           "customfield_10340":"https://perfect-day-demo.herokuapp.com/api/meta/part_lists",
+
+           "customfield_10700":"https://perfect-day-demo.herokuapp.com/api/meta/requesters",
+
+           "customfield_10222":"https://perfect-day-demo.herokuapp.com/api/meta/contacts",
+           "customfield_10713":"https://perfect-day-demo.herokuapp.com/api/meta/contacts"
+]
+
+map.each { entry -> 
+    updateCompanyOptions(issue, entry);
+}
+
+
+def updateCompanyOptions(def issue, entry) {
+    CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+    def selectCustomField = customFieldManager.getCustomFieldObject("${entry.key}")
+    def selectConfig = selectCustomField.getRelevantConfig(issue)
+    def selectOptions = ComponentAccessor.optionsManager.getOptions(selectConfig)
+    def confList = []
+    selectOptions.each { it -> confList.add(it.value) }
+    def apiList = getCompanyList(entry.value);
+    def itemsToAdd = []
+    for (int i = 0; i < apiList.size(); i++) {
+        String name = apiList.get(i);
+        if (!confList.contains(name)) {
+            itemsToAdd.add(name);
+        }
+    }
+    for (int i = 0; i < itemsToAdd.size(); i++) {
+        addOptionToCustomField(selectCustomField, itemsToAdd.get(i))
+    }
+}
+
+def getCompanyList(String url) {
+    def response = new JsonSlurper().parse(new URL(url))
+    def list = [];
+    response.each {
+        it ->
+            if (it.name != null && it.name != "null") {
+                list.add(it.name)
+            }
+    }
+    return list
+}
+
+def addOptionToCustomField(CustomField customField, String value) {
+    if (customField != null) {
+        List<FieldConfigScheme> schemes = customField.getConfigurationSchemes();
+        if (schemes != null && !schemes.isEmpty()) {
+            FieldConfigScheme sc = schemes.get(0);
+            Map configs = sc.getConfigsByConfig();
+            if (configs != null && !configs.isEmpty()) {
+                FieldConfig config = (FieldConfig) configs.keySet().iterator().next();
+                OptionsManager optionsManager = ComponentAccessor.getOptionsManager();
+                Options l = optionsManager.getOptions(config);
+                int nextSequence = l.isEmpty() ? 1 : l.getRootOptions().size() + 1;
+                optionsManager.createOption(config, null, (long) nextSequence, value);
+            }
+        }
+    }
+}
