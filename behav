@@ -1,0 +1,30 @@
+import com.onresolve.jira.groovy.user.FieldBehaviours
+import groovy.transform.BaseScript
+import net.sf.json.groovy.JsonSlurper
+
+@BaseScript FieldBehaviours fieldBehaviours
+
+String contact = getFieldById("customfield_10713").getValue()
+def name = getFieldById("customfield_10413")
+def phone = getFieldById("customfield_10414")
+def email = getFieldById("customfield_10415")
+
+def consigneeCompanyName = getFieldById("customfield_10228")
+
+if (contact == "Add New") {
+    name.setHidden(false)
+   /* if(name.getValue() != null && name.getValue() !="" && consigneeCompanyName.getValue() != null && consigneeCompanyName.getValue() != ""){
+        
+        name.setFormValue("")
+        phone.setFormValue("")
+        email.setFormValue("")
+    }
+    */
+} else {
+    def contacts_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/meta/contacts"))
+    def searchContact = contacts_api.findAll { it.name == "${contact}" }
+    name.setHidden(true)
+    name.setFormValue(searchContact[0].name)
+    phone.setFormValue(searchContact[0].phone)
+    email.setFormValue(searchContact[0].email_address)
+}
