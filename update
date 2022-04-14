@@ -1,0 +1,325 @@
+import com.atlassian.crowd.embedded.api.User
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.user.util.UserUtil
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.jira.issue.comments.Comment
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+import com.atlassian.jira.issue.index.IssueIndexingService
+import java.text.SimpleDateFormat
+import com.atlassian.jira.issue.CustomFieldManager
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.type.EventDispatchOption
+import groovy.json.JsonOutput 
+import groovy.json.JsonBuilder
+import groovy.json.StreamingJsonBuilder;
+import groovyx.net.http.HTTPBuilder
+import static groovyx.net.http.ContentType.*
+import groovyx.net.http.ContentType
+import static groovyx.net.http.Method.*
+import groovy.json.JsonSlurper
+import net.sf.json.groovy.JsonSlurper
+
+import com.atlassian.jira.issue.index.IssueIndexingService
+import com.atlassian.jira.util.ImportUtils
+
+import com.atlassian.jira.event.type.EventDispatchOption
+
+import java.sql.Timestamp
+import java.text.SimpleDateFormat;  
+import java.util.Date; 
+
+
+def jqlSearch="project = PERFECTDAY and created > -10m"
+SearchService searchService = ComponentAccessor.getComponent(SearchService.class)
+UserUtil userUtil = ComponentAccessor.getUserUtil()
+IssueManager issueManager = ComponentAccessor.getIssueManager()
+def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+List<Issue> issues = null
+SearchService.ParseResult parseResult = searchService.parseQuery(user, jqlSearch)
+if (parseResult.isValid()) {
+ def searchResult = searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter())
+ 
+  issues = searchResult.results.collect { issueManager.getIssueObject(it.id) }
+} else {
+ log.error("Invalid JQL: " + jqlSearch);
+}
+for(int i=0;i<issues.size();i++){
+	CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+//def issueManager = ComponentAccessor.getIssueManager()
+//def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+
+def issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey(issues[i].toString())
+//-----------------------------------------------G E T  F R O M  J I R A---------------------------------------------------------
+//Issue Attributes
+def issueKey = issue.getKey();
+def issueStatus = issue.getStatusObject().getName();
+def request_type = issue.getIssueType().getName();
+// *** Shipping Attributes ***
+def issue_shipping_urgency = customFieldManager.getCustomFieldObject("customfield_10416")
+def issue_shipping_urgency_Value = issue.getCustomFieldValue(issue_shipping_urgency)
+
+def jira_shipperName = customFieldManager.getCustomFieldObject("customfield_10212")
+def jira_shipperName_value = issue.getCustomFieldValue(jira_shipperName)
+
+def jira_shipperAddress = customFieldManager.getCustomFieldObject("customfield_10213")
+def jira_shipperAddress_value = issue.getCustomFieldValue(jira_shipperAddress)
+
+def jira_shipperCity = customFieldManager.getCustomFieldObject("customfield_10217")
+def jira_shipperCity_value = issue.getCustomFieldValue(jira_shipperCity)
+
+def jira_shipperZipcode = customFieldManager.getCustomFieldObject("customfield_10218")
+def jira_shipperZipcode_value = issue.getCustomFieldValue(jira_shipperZipcode)
+
+def jira_shipperState = customFieldManager.getCustomFieldObject("customfield_10219")
+def jira_shipperState_value = issue.getCustomFieldValue(jira_shipperState)
+
+def jira_shipperCountry = customFieldManager.getCustomFieldObject("customfield_10221")
+def jira_shipperCountry_value = issue.getCustomFieldValue(jira_shipperCountry)
+
+def jira_shippercontactName = customFieldManager.getCustomFieldObject("customfield_10223")
+def jira_shippercontactName_value = issue.getCustomFieldValue(jira_shippercontactName)
+
+def jira_shippercontactPhone = customFieldManager.getCustomFieldObject("customfield_10224")
+def jira_shippercontactPhone_value = issue.getCustomFieldValue(jira_shippercontactPhone)
+
+def jira_shippercontactEmail = customFieldManager.getCustomFieldObject("customfield_10225")
+def jira_shippercontactEmail_value = issue.getCustomFieldValue(jira_shippercontactEmail)
+
+// *** Consignee Attributes ***
+def jira_consigneeName = customFieldManager.getCustomFieldObject("customfield_10228")
+def jira_consigneeName_value = issue.getCustomFieldValue(jira_consigneeName)
+
+def jira_consigneeAddress = customFieldManager.getCustomFieldObject("customfield_10229")
+def jira_consigneeAddress_value = issue.getCustomFieldValue(jira_consigneeAddress)
+
+def jira_consigneeCity = customFieldManager.getCustomFieldObject("customfield_10230")
+def jira_consigneeCity_value = issue.getCustomFieldValue(jira_consigneeCity)
+
+def jira_consigneeZipcode = customFieldManager.getCustomFieldObject("customfield_10231")
+def jira_consigneeZipcode_value = issue.getCustomFieldValue(jira_consigneeZipcode)
+
+def jira_consigneeState = customFieldManager.getCustomFieldObject("customfield_10233")
+def jira_consigneeState_value = issue.getCustomFieldValue(jira_consigneeState)
+
+def jira_consigneeCountry = customFieldManager.getCustomFieldObject("customfield_10232")
+def jira_consigneeCountry_value = issue.getCustomFieldValue(jira_consigneeCountry)
+
+def jira_consigneecontactName = customFieldManager.getCustomFieldObject("customfield_10413")
+def jira_consigneecontactName_value = issue.getCustomFieldValue(jira_consigneecontactName)
+
+def jira_consigneecontactPhone = customFieldManager.getCustomFieldObject("customfield_10414")
+def jira_consigneecontactPhone_value = issue.getCustomFieldValue(jira_consigneecontactPhone)
+
+def jira_consigneecontactEmail = customFieldManager.getCustomFieldObject("customfield_10415")
+def jira_consigneecontactEmail_value = issue.getCustomFieldValue(jira_consigneecontactEmail)
+
+
+// *** Requestor Attributes ***
+
+def jira_requestorName = customFieldManager.getCustomFieldObject("customfield_10410")
+def jira_requestorName_value = issue.getCustomFieldValue(jira_requestorName)
+
+def jira_requestorPhone = customFieldManager.getCustomFieldObject("customfield_10411")
+def jira_requestorPhone_value = issue.getCustomFieldValue(jira_requestorPhone)
+
+def jira_requestorEmail = customFieldManager.getCustomFieldObject("customfield_10412")
+def jira_requestorEmail_value = issue.getCustomFieldValue(jira_requestorEmail)
+
+// *** Logistics Attributes ***
+
+def jira_logistics1_name = customFieldManager.getCustomFieldObject("customfield_10401")
+def jira_logistics1_name_value = issue.getCustomFieldValue(jira_logistics1_name)
+
+def jira_logistics1_shippingUrgency = customFieldManager.getCustomFieldObject("customfield_10416")
+def jira_logistics1_shippingUrgency_value = issue.getCustomFieldValue(jira_logistics1_shippingUrgency)
+
+def jira_logistics1_pickedUp = customFieldManager.getCustomFieldObject("customfield_10406")
+def jira_logistics1_pickedUp_value = issue.getCustomFieldValue(jira_logistics1_pickedUp)
+
+def jira_logistics1_deliveredOn = customFieldManager.getCustomFieldObject("customfield_10407")
+def jira_logistics1_deliveredOn_value = issue.getCustomFieldValue(jira_logistics1_deliveredOn)
+
+
+
+//-------------------------------------------G E T  A P I-------------------------------------------------------------------
+//Get Origin and Destination details from API
+
+Integer cargo1_ref_id =0 as Integer
+def consignments_api = new JsonSlurper().parse(new URL("http://perfect-day-demo.herokuapp.com/api/consignments/"+issueKey))
+// return refrigerants_api;
+
+//Origin Attributes
+def shipperName = consignments_api.origin_attributes.shipper_attributes.name;
+def shipperAddress = consignments_api.origin_attributes.shipper_attributes.address;
+def shipperCity = consignments_api.origin_attributes.shipper_attributes.city;
+def shipperZipcode = consignments_api.origin_attributes.shipper_attributes.zipcode;
+def shipperState = consignments_api.origin_attributes.shipper_attributes.state.name;
+def shipperCountry = consignments_api.origin_attributes.shipper_attributes.country.name;
+
+
+def shipperContactName = consignments_api.origin_attributes.contact_attributes.name;
+def shipperContactPhone = consignments_api.origin_attributes.contact_attributes.phone;
+def shipperContactEmail = consignments_api.origin_attributes.contact_attributes.email_address;
+
+//Destination Attributes
+def consigneeName = consignments_api.destination_attributes.consignee_attributes.name;
+def consigneeAddress = consignments_api.destination_attributes.consignee_attributes.address;
+def consigneeCity = consignments_api.destination_attributes.consignee_attributes.city;
+def consigneeZipcode = consignments_api.destination_attributes.consignee_attributes.zipcode;
+def consigneeState = consignments_api.destination_attributes.consignee_attributes.state.name;
+def consigneeCountry = consignments_api.destination_attributes.consignee_attributes.country.name;
+
+def consigneeContactName = consignments_api.destination_attributes.contact_attributes.name;
+def consigneeContactPhone = consignments_api.destination_attributes.contact_attributes.phone;
+def consigneeContactEmail = consignments_api.destination_attributes.contact_attributes.email_address;
+
+//Requestor Attributes
+def requestorName = consignments_api.requester_attributes.name;
+def requestorPhone = consignments_api.requester_attributes.phone_number;
+def requestorEmail = consignments_api.requester_attributes.email_address;
+
+//Logistics Attributes
+def logistics1_name = consignments_api.logistics_info_attributes.logistics_supplier_attributes.name;
+def logistics1_address = consignments_api.logistics_info_attributes.logistics_supplier_attributes.address;
+def logistics1_shippingUrgency = consignments_api.logistics_info_attributes.shipping_urgency;
+def logistics1_pickedUp = consignments_api.logistics_info_attributes.picked_up_on;
+def logistics1_deliveryOn = consignments_api.logistics_info_attributes.delivered_on;
+    
+
+
+
+//---------------------------------------------U P D A T E-------------------------------------------------------------------
+
+//***** Update Shipping Attributes latest value in JIRA from Admin API *****
+
+if(! jira_shipperName_value.equals(shipperName)){
+    issue.setCustomFieldValue(jira_shipperName, shipperName)
+}
+if(! jira_shipperAddress_value.equals(shipperAddress)){
+    issue.setCustomFieldValue(jira_shipperAddress, shipperAddress)
+}
+if(! jira_shipperCity_value.equals(shipperCity)){
+    issue.setCustomFieldValue(jira_shipperCity, shipperCity)
+}
+if(! jira_shipperState_value.equals(shipperState)){
+    def stateConfig = jira_shipperState.getRelevantConfig(issue)
+    def value = ComponentAccessor.optionsManager.getOptions(stateConfig)?.find {
+    	it.value == "${shipperState.toString()}"
+    }
+    issue.setCustomFieldValue(jira_shipperState, value)
+}
+
+if(! jira_shipperCountry_value.equals(shipperCountry)){
+    def countryConfig = jira_shipperCountry.getRelevantConfig(issue)
+    def value = ComponentAccessor.optionsManager.getOptions(countryConfig)?.find {
+    	it.value == "${shipperCountry.toString()}"
+        
+    }
+    issue.setCustomFieldValue(jira_shipperCountry, value)
+}
+if(! jira_shippercontactName_value.equals(shipperContactName)){
+    issue.setCustomFieldValue(jira_shippercontactName, shipperContactName)
+}
+if(! jira_shippercontactPhone_value.equals(shipperContactPhone)){
+    issue.setCustomFieldValue(jira_shippercontactPhone, shipperContactPhone)
+}
+if(! jira_shippercontactEmail_value.equals(shipperContactEmail)){
+    issue.setCustomFieldValue(jira_shippercontactEmail, shipperContactEmail)
+}
+
+//***** Update Consignee Attributes latest value in JIRA from Admin API *****
+
+if(! jira_consigneeName_value.equals(consigneeName)){
+    issue.setCustomFieldValue(jira_consigneeName, consigneeName)
+}
+if(! jira_consigneeAddress_value.equals(consigneeAddress)){
+    issue.setCustomFieldValue(jira_consigneeAddress, consigneeAddress)
+}
+if(! jira_consigneeCity_value.equals(consigneeCity)){
+    issue.setCustomFieldValue(jira_consigneeCity, consigneeCity)
+}
+if(! jira_consigneeState_value.equals(consigneeState)){
+    def stateConfig = jira_consigneeState.getRelevantConfig(issue)
+    def value = ComponentAccessor.optionsManager.getOptions(stateConfig)?.find {
+    	it.value == "${consigneeState.toString()}"
+    }
+    issue.setCustomFieldValue(jira_consigneeState, value)
+}
+
+if(! jira_consigneeCountry_value.equals(consigneeCountry)){
+    def countryConfig = jira_consigneeCountry.getRelevantConfig(issue)
+    def value = ComponentAccessor.optionsManager.getOptions(countryConfig)?.find {
+    	it.value == "${consigneeCountry.toString()}"
+        
+    }
+    issue.setCustomFieldValue(jira_consigneeCountry, value)
+}
+if(! jira_consigneecontactName_value.equals(consigneeContactName)){
+    issue.setCustomFieldValue(jira_consigneecontactName, consigneeContactName)
+}
+if(! jira_consigneecontactPhone_value.equals(consigneeContactPhone)){
+    issue.setCustomFieldValue(jira_consigneecontactPhone, consigneeContactPhone)
+}
+if(! jira_consigneecontactEmail_value.equals(consigneeContactEmail)){
+    issue.setCustomFieldValue(jira_consigneecontactEmail, consigneeContactEmail)
+}
+
+//***** Update Requester Attributes latest value in JIRA from Admin API *****
+
+if(! jira_requestorName_value.equals(requestorName)){
+    issue.setCustomFieldValue(jira_requestorName, requestorName)
+}
+if(! jira_requestorPhone_value.equals(requestorPhone)){
+    issue.setCustomFieldValue(jira_requestorPhone, requestorPhone)
+}
+if(! jira_requestorEmail_value.equals(requestorEmail)){
+    issue.setCustomFieldValue(jira_requestorEmail, requestorEmail)
+}
+
+//***** Update Logistics Attributes latest value in JIRA from Admin API *****
+
+if(! jira_logistics1_name_value .equals(logistics1_name)){
+    issue.setCustomFieldValue(jira_logistics1_name, logistics1_name)
+}
+if(! jira_logistics1_shippingUrgency_value.equals(logistics1_shippingUrgency)){
+    def shippingUrgencyConfig = jira_logistics1_shippingUrgency.getRelevantConfig(issue)
+    def value = ComponentAccessor.optionsManager.getOptions(shippingUrgencyConfig)?.find {
+    	it.value == "${logistics1_shippingUrgency.toString()}"
+        
+    }
+    issue.setCustomFieldValue(jira_logistics1_shippingUrgency, value)
+}
+if(! jira_logistics1_pickedUp_value.equals(logistics1_pickedUp)){
+    Date date = Date.parse("yyyy-MM-dd'T'HH:mm:ss", logistics1_pickedUp.toString());
+    issue.setCustomFieldValue(jira_logistics1_pickedUp, new Timestamp(date.getTime()));
+}
+if(! jira_logistics1_deliveredOn_value.equals(logistics1_deliveryOn)){
+    Date date = Date.parse("yyyy-MM-dd'T'HH:mm:ss", logistics1_deliveryOn.toString());
+    issue.setCustomFieldValue(jira_logistics1_deliveredOn, new Timestamp(date.getTime()));
+}
+
+
+
+//----------------------------------------------C H A N G E  H I S T O R Y---------------------------------------------------------
+
+//***** Update Changehistory *****
+
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+issueManager.updateIssue( currentUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false)
+
+//Indexing Issue
+boolean wasIndexing = ImportUtils.isIndexIssues()
+   ImportUtils.setIndexIssues(true)
+def issueIndexingService  =ComponentAccessor.getComponent(IssueIndexingService.class)
+   issueIndexingService.reIndex(issue)
+   ImportUtils.setIndexIssues(wasIndexing)
+}
+
+
